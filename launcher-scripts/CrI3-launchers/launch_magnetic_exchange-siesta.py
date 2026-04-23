@@ -14,10 +14,10 @@ from aiida_fourstate import MagneticExchangeWorkChain
 num_machines = 1
 ### Snellius
 code_label = 'siesta-5.4.1-foss-2023a-xml-v1@Snellius'
-num_mpiprocs_per_machine = 11*2*5  # nk * nspin * ngroups (ELSI needs very specific number of tasks)
+num_mpiprocs_per_machine = 96
 num_cores_per_mpiproc = 1
-queue_name = 'genoa'
-max_memory_kb = 352321536  # max mem of 192-core genoa node is smallest allocation
+queue_name = 'fat_genoa'
+max_memory_kb = 754974720  # 1/2 of total memory of 192-core fat_genoa node
 
 
 
@@ -44,15 +44,15 @@ custom_protocol = {
         #'elsi-broadening-method': 'fermi',
         'solution-method': 'diagon',
         'diag-algorithm': 'Divide-and-Conquer',
-        'diag-paralleloverk': 'true',
-        'mesh-cutoff': '1500 Ry',
+        'diag-paralleloverk': 'false',
+        'mesh-cutoff': '100 Ry',
         'electronictemperature': '1 meV',
         'write-mulliken-pop': 1,
         'write-hirshfeld-pop': 'true',
     },
     'basis': {
         'pao-basistype': 'split',
-        'pao-basissize': 'TZP',
+        'pao-basissize': 'DZP',
         'pao-energyshift': '0.01 Ry',
         'pao-splitnorm': '0.15',
         'pao-splittailnorm': 'true',
