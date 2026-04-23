@@ -25,7 +25,7 @@ queue_name = 'fat_genoa'
 max_memory_kb = 566231040  # 3/8 of total memory of 192-core fat_genoa node
 
 # Convergence parameters
-meshcutoff_list = [f'{mc} Ry' for mc in ([10, 20, 50, 75] + list(range(100, 2050, 100)))]
+meshcutoff_list = [f'{mc} Ry' for mc in ([50, 75] + list(range(100, 2050, 100)))]
 etol = 0.05 / 1000  # 0.05 meV
 conv_window = 5
 num_effective_NN = 3
