@@ -171,7 +171,7 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
         # Set magnetization_per_site
         num_sites = len(self.inputs.structure.sites)
 
-        # We start from a zero magnetization per site and only change the supplied magnetic sites.
+        # We start from a zero magnetization per site and only change the supplied magnetic sites
         magnetization_per_site = [0.0] * num_sites
         assert len(magnetization_per_site) == num_sites
         for site_idx in self.ctx.sites:
