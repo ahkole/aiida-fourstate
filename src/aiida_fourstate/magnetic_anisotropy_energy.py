@@ -62,11 +62,11 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
         spec.input('dir1', valid_type=orm.List,
                    validator=validate_cartesian_3d_direction,
                    required=False, default=lambda: orm.List([0., 0., 1.]),
-                   help='First direction of the magnetization (Cartesian vector).')
+                   help='First direction of the magnetization (Cartesian vector of unit length).')
         spec.input('dir2', valid_type=orm.List,
                    validator=validate_cartesian_3d_direction,
                    required=False, default=lambda: orm.List([1., 0., 0.]),
-                   help='Second direction of the magnetization (Cartesian vector).')
+                   help='Second direction of the magnetization (Cartesian vector of unit length).')
         spec.input('magnetization_magnitude', valid_type=orm.Float,
                    required=False, default=lambda: orm.Float(1.0),
                    help='Magnitude of magnetization to set on magnetic sites (in µB)')
