@@ -1,4 +1,5 @@
-"""Workchain to compute magnetic exchange coupling J using the 4-state method."""
+"""Workchain to compute magnetic anisotropy energy between
+two different magnetization directions."""
 from aiida import orm
 from aiida.engine import WorkChain, calcfunction
 from aiida_common_workflows.common.types import RelaxType, SpinType, ElectronicType
