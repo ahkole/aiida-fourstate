@@ -7,6 +7,23 @@ from aiida_common_workflows.common.types import RelaxType, SpinType, ElectronicT
 from aiida_common_workflows.plugins import load_workflow_entry_point
 
 
+def validate_inputs(inputs, _):
+    from numbers import Integral
+
+    for site_idx in inputs['magnetic_sites']:
+        if not isinstance(site_idx, Integral):
+            return f'Site indices must be integer, instead found index of type {type(site_idx)}.'
+
+    for site_idx in inputs['magnetic_sites']:
+        if site_idx < 0:
+            return f'Site indices must be >= 0, found site with index {site_idx}.'
+
+    num_sites = len(inputs['structure'].sites)
+    for site_idx in inputs['magnetic_sites']:
+        if site_idx >= num_sites:
+            return f'Site indices must be < num_sites = {num_sites}, found site with index {site_idx}.'
+
+
 def validate_cartesian_3d_direction(vector, _):
     from numbers import Real
     import numpy as np
@@ -73,6 +90,7 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
         spec.input('magnetic_sites', valid_type=orm.List,
                    help='List of magnetic sites in the structure.')
         spec.input('engine_name', valid_type=orm.Str)
+        spec.inputs.validator = validate_inputs
 
         spec.input_namespace('generator_inputs',
             help='The inputs that will be passed to the input generator of the specified `sub_process`.')
@@ -112,30 +130,13 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
 
     def setup(self):
         """Initialize context variables."""
-        from numbers import Integral
-
         self.ctx.dir1 = self.inputs.dir1
         self.ctx.dir2 = self.inputs.dir2
         self.ctx.mag_magnitude = self.inputs.magnetization_magnitude.value
         self.ctx.sites = self.inputs.magnetic_sites
 
-        # Validate inputs
-        for site_idx in self.ctx.sites:
-            if not isinstance(site_idx, Integral):
-                self.report(f'Site indices must be integer, instead found index of type {type(site_idx)}.')
-                return self.exit_codes.ERROR_INVALID_SITE_INDICES
-
-        for site_idx in self.ctx.sites:
-            if site_idx < 0:
-                self.report(f'Site indices must be >= 0, found site with index {site_idx}.')
-                return self.exit_codes.ERROR_INVALID_SITE_INDICES
-
+        # Do some reporting
         num_sites = len(self.inputs.structure.sites)
-        for site_idx in self.ctx.sites:
-            if site_idx >= num_sites:
-                self.report(f'Site indices must be < num_sites = {num_sites}, found site with index {site_idx}.')
-                return self.exit_codes.ERROR_INVALID_SITE_INDICES
-
         num_magnetic = len(self.ctx.sites)
         self.report(f'Structure has {num_sites} atoms of which {num_magnetic} magnetic sites.')
 
