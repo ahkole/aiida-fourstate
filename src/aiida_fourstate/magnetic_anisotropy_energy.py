@@ -67,6 +67,12 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
 
     This workchain computes the magnetic anistropy energy (mae) using two non-collinear
     spin configurations supplied by the user.
+
+    Uses the formula: mae = (e1 - e2) / n
+    where:
+        e1: Energy along first direction
+        e2: Energy along second direction
+        n: number of magnetic sites
     """
 
     @classmethod
