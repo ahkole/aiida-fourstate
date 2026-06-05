@@ -118,9 +118,9 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
 
         spec.output('magnetic_anisotropy_energy', valid_type=orm.Float,
                    help='Magnetic anisotropy energy in eV')
-        spec.output('energy1', valid_type=orm.Float,
+        spec.output('energy_dir1', valid_type=orm.Float,
                    help='Energy with spins along first direction.')
-        spec.output('energy2', valid_type=orm.Float,
+        spec.output('energy_dir2', valid_type=orm.Float,
                    help='Energy with spins along second direction.')
 
         spec.exit_code(401, 'ERROR_INVALID_SITE_INDICES',
@@ -242,7 +242,7 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
     def results(self):
         """Store results in outputs."""
         self.out('magnetic_anisotropy_energy', self.ctx.mae)
-        self.out('energy1', self.ctx.energy1)
-        self.out('energy2', self.ctx.energy2)
+        self.out('energy_dir1', self.ctx.energy1)
+        self.out('energy_dir2', self.ctx.energy2)
 
         self.report('MagneticAnisotropyEnergyWorkChain completed successfully')
