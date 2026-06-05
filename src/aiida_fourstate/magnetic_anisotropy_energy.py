@@ -201,7 +201,6 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
                 self.report(f'Calculation {config_name} failed with status: {calc.exit_status}')
 
         if failed:
-            self.report(f'The following calculations failed: {", ".join(failed)}')
             return self.exit_codes.ERROR_SUB_PROCESS_FAILED
 
     def compute_mae(self):
