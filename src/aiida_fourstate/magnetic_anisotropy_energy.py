@@ -7,7 +7,7 @@ from aiida_common_workflows.common.types import RelaxType, SpinType, ElectronicT
 from aiida_common_workflows.plugins import load_workflow_entry_point
 
 
-def is_cartesian_3d_direction(vector, _):
+def validate_cartesian_3d_direction(vector, _):
     from numbers import Real
     import numpy as np
 
@@ -60,11 +60,11 @@ class MagneticAnisotropyEnergyWorkChain(WorkChain):
         spec.input('structure', valid_type=orm.StructureData,
                    help='Input structure')
         spec.input('dir1', valid_type=orm.List,
-                   validator=is_cartesian_3d_direction,
+                   validator=validate_cartesian_3d_direction,
                    required=False, default=lambda: orm.List([0., 0., 1.]),
                    help='First direction of the magnetization (Cartesian vector).')
         spec.input('dir2', valid_type=orm.List,
-                   validator=is_cartesian_3d_direction,
+                   validator=validate_cartesian_3d_direction,
                    required=False, default=lambda: orm.List([1., 0., 0.]),
                    help='Second direction of the magnetization (Cartesian vector).')
         spec.input('magnetization_magnitude', valid_type=orm.Float,
