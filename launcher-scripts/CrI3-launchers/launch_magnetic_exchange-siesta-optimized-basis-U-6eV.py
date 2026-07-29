@@ -8,12 +8,7 @@ from aiida_common_workflows.common import ElectronicType
 import ase.io
 from ase.geometry import find_mic
 
-from aiida_optimize import OptimizationWorkChain
-from aiida_optimize.engines import Convergence
-from aiida_optimize.wrappers import AddInputsWorkChain, CreateEvaluateWorkChain
-
 from aiida_fourstate import MagneticExchangeWorkChain
-from aiida_fourstate.utils import compute_FM_AFM_diff
 
 
 num_machines = 1
@@ -21,15 +16,9 @@ num_machines = 1
 code_label = 'siesta-5.4.1-foss-2023a-xml-v1@Snellius'
 num_mpiprocs_per_machine = 96
 num_cores_per_mpiproc = 1
-queue_name = 'fat_genoa'
-max_memory_kb = 754974720  # 1/2 of total memory of 192-core fat_genoa node
+queue_name = 'genoa'
+max_memory_kb = 176160768  # 1/2 of total memory of 192-core genoa node
 
-# Convergence parameters
-meshcutoff_list = [f'{mc} Ry' for mc in ([50, 75] + list(range(100, 2050, 100)))]
-etol = 0.01 / 1000  # 0.01 meV
-conv_window = 10
-#num_effective_NN = 3
-#num_magnetic_atoms = 2
 
 
 protocol = 'custom'
@@ -41,7 +30,7 @@ kpt_node.set_kpoints_mesh(kpoints)
 
 # LDA four-state v0 protocol for SIESTA (with coarser k-points)
 custom_protocol = {
-    'parameters': orm.Dict({
+    'parameters': {
         'block xc-mix': '\n  2\n  LDA LIBXC-001 1.0 0.0\n  LDA LIBXC-012 0.0 1.0\n%endblock xc-mix',
         'max-scf-iterations': 500,
         'scf-mixer-method': 'Pulay',
@@ -56,11 +45,19 @@ custom_protocol = {
         'solution-method': 'diagon',
         'diag-algorithm': 'Divide-and-Conquer',
         'diag-paralleloverk': 'false',
-        #'mesh-cutoff': '1000 Ry',
+        'mesh-cutoff': '100 Ry',
         'electronictemperature': '1 meV',
         'write-mulliken-pop': 1,
         'write-hirshfeld-pop': 'true',
-    }),
+        'dftu-projectorgenerationmethod': 2,
+        'dftu-energyshift': '0.05 Ry',
+        'dftu-cutoffnorm': '0.9',
+        'dftu-firstiteration': 'false',
+        'dftu-thresholdtol': '0.01',
+        'dftu-poptol': '0.001',
+        'dftu-potentialshift': 'false',
+        'block dftu-proj': '\n  Cr 1       # Label, l_shells\n  n=3 2      # n, l (i.e. 3d orbital)\n  6.00 0.00  # U(eV), J(eV) for this shell\n  0.00 0.00  # rc(Bohr), \\omega(Bohr) (if 0 r_c from DFTU.CutoffNorm and \\omega from default value)\n%endblock dftu-proj',
+    },
     'basis': {
         'pao-basistype': 'split',
         'pao-basissize': 'DZP',
@@ -70,6 +67,34 @@ custom_protocol = {
         'pao-softdefault': 'true',
         'pao-softinnerradius': '0.9',
         'pao-softpotential': '40 Ry',
+        '%block pao-basis': """
+Cr   5      0.13185
+ n=3   0   1   E    14.26671     2.89848
+     3.48746
+     1.00000
+ n=4   0   2   E   104.46954     7.47649
+     8.20106     3.10932
+     1.00000     1.00000
+ n=3   1   1   E   173.73979     3.35023
+     5.16243
+     1.00000
+ n=4   1   1   E    18.71581     0.89741
+     6.28154
+     1.00000
+ n=3   2   2   E    86.71030     2.64505
+     7.89989     4.59227
+     1.00000     1.00000
+I    3     -0.04007
+ n=5   0   2   E     6.65801     4.82446
+     7.95305     4.27790
+     1.00000     1.00000
+ n=5   1   2   E     4.29115     4.20575
+     8.37539     4.44784
+     1.00000     1.00000
+ n=5   2   1   E     5.79825     0.42498
+     6.46518
+     1.00000
+%EndBlock PAO.Basis""",
     },
     'kpoints': kpt_node,
     'pseudo_family': 'PseudoDojo/0.4/LDA/SR/standard/psml',
@@ -247,19 +272,6 @@ def launch_magnetic_exchange_calculation(neigh_idx = 1, ask_for_confirmation=Tru
         'engine_name': orm.Str('siesta'),
     }
 
-    optimization_inputs = {
-        'engine': Convergence,
-        'engine_kwargs': orm.Dict(dict=dict(
-            input_values=meshcutoff_list,
-            tol=etol,
-            input_key="generator_inputs.custom_protocol.parameters:mesh-cutoff",
-            result_key="exchange_coupling",
-            convergence_window=conv_window
-            )),
-        'evaluate_process': MagneticExchangeWorkChain,
-        'evaluate': inputs,
-    }
-
     if ask_for_confirmation:
         print(f"Submitting J({neigh_idx}) for CrI3 to {code_label} on {num_machines} node(s) with {num_mpiprocs_per_machine=}.")
         print("Submit? [Ctrl+C to stop]")
@@ -268,8 +280,8 @@ def launch_magnetic_exchange_calculation(neigh_idx = 1, ask_for_confirmation=Tru
     # We first need to store the kpoints node (if not done already)
     kpt_node.store()
 
-    print("Submitting Convergence of MagneticExchangeWorkChain...")
-    node = submit(OptimizationWorkChain, **optimization_inputs)
+    print("Submitting MagneticExchangeWorkChain...")
+    node = submit(MagneticExchangeWorkChain, **inputs)
     print(f"\nSubmitted: J({neigh_idx}), PK = {node.pk}")
     node.label = f"CrI3 J({neigh_idx}) calculation"
     node.base.extras.set('magnetic_exchange_neigh_idx', neigh_idx)
@@ -277,6 +289,6 @@ def launch_magnetic_exchange_calculation(neigh_idx = 1, ask_for_confirmation=Tru
     return node
 
 if __name__ == '__main__':
-    for neigh_idx in [1]:
+    for neigh_idx in [1, 2, 3]:
         print(f"\n\nLaunching SIESTA calculation of J({neigh_idx})*S^2\n")
         launch_magnetic_exchange_calculation(neigh_idx=neigh_idx)
